@@ -21,17 +21,20 @@ const linearizabilityCheckTimeout = 1 * time.Second
 
 // get/put/putappend that keep counts
 func Get(cfg *config, ck *Clerk, key string) string {
+	fmt.Printf("Test:clerk %d GET Key:%s \n",ck.clerkId,key,)
 	v := ck.Get(key)
 	cfg.op()
 	return v
 }
 
 func Put(cfg *config, ck *Clerk, key string, value string) {
+	fmt.Printf("Test:clerk %d PUT Key:%s Value:%s\n",ck.clerkId,key,value)
 	ck.Put(key, value)
 	cfg.op()
 }
 
 func Append(cfg *config, ck *Clerk, key string, value string) {
+	fmt.Printf("Test:clerk %d Append Key:%s Value:%s\n",ck.clerkId,key,value)
 	ck.Append(key, value)
 	cfg.op()
 }
@@ -137,6 +140,14 @@ func partitioner(t *testing.T, cfg *config, ch chan bool, done *int32) {
 				}
 			}
 		}
+		for i:=0;i<2;i++{
+			n := len(pa[i])
+			fmt.Printf("in partion %d are :",i)
+			for j:=0;j<n;j++{
+				fmt.Printf(" %d",pa[i][j])
+			}
+			fmt.Println()
+		}
 		cfg.partition(pa[0], pa[1])
 		time.Sleep(electionTimeout + time.Duration(rand.Int63()%200)*time.Millisecond)
 	}
@@ -212,6 +223,11 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 					j++
 				} else {
 					// log.Printf("%d: client new get %v\n", cli, key)
+					//var oldseq int
+					//myck.mu.Lock()
+					//fmt.Printf("Test:clerk %d seq %d sendGetRPC key is %s wanted:%v\n",myck.clerkId,myck.seq+1,key,last)
+					//oldseq=myck.seq+1
+					//myck.mu.Unlock()
 					v := Get(cfg, myck, key)
 					if v != last {
 						log.Fatalf("get wrong value, key %v, wanted:\n%v\n, got\n%v\n", key, last, v)
@@ -350,6 +366,7 @@ func GenericTestLinearizability(t *testing.T, part string, nclients int, nserver
 				var out models.KvOutput
 				start := int64(time.Since(begin))
 				if (rand.Int() % 1000) < 500 {
+
 					Append(cfg, myck, key, nv)
 					inp = models.KvInput{Op: 2, Key: key, Value: nv}
 					j++

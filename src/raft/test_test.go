@@ -126,7 +126,7 @@ func TestRPCBytes2B(t *testing.T) {
 	iters := 10
 	var sent int64 = 0
 	for index := 2; index < iters+2; index++ {
-		cmd := randstring(5000)
+		cmd := randstring(5000)//5000
 		xindex := cfg.one(cmd, servers, false)
 		if xindex != index {
 			t.Fatalf("got index %v but expected %v", xindex, index)
@@ -137,7 +137,7 @@ func TestRPCBytes2B(t *testing.T) {
 	bytes1 := cfg.bytesTotal()
 	got := bytes1 - bytes0
 	expected := int64(servers) * sent
-	if got > expected+50000 {
+	if got > expected+50000 {//50000
 		t.Fatalf("too many RPC bytes; got %v, expected %v", got, expected)
 	}
 
@@ -156,7 +156,7 @@ func TestFailAgree2B(t *testing.T) {
 	// disconnect one follower from the network.
 	leader := cfg.checkOneLeader()
 	cfg.disconnect((leader + 1) % servers)
-
+	fmt.Printf("%d is disconnected\n",(leader + 1) % servers)
 	// the leader and remaining follower should be
 	// able to agree despite the disconnected follower.
 	cfg.one(102, servers-1, false)
@@ -167,7 +167,7 @@ func TestFailAgree2B(t *testing.T) {
 
 	// re-connect
 	cfg.connect((leader + 1) % servers)
-
+	fmt.Printf("%d is connected\n",(leader + 1) % servers)
 	// the full set of servers should preserve
 	// previous agreements, and be able to agree
 	// on new commands.
@@ -372,9 +372,9 @@ func TestBackup2B(t *testing.T) {
 	servers := 5
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
-
+	//test-10 and test-349
 	cfg.begin("Test (2B): leader backs up quickly over incorrect follower logs")
-
+	//rand.Intn(150)  rand.Int()%100,
 	cfg.one(rand.Int(), servers, true)
 
 	// put leader and one follower in a partition
@@ -382,7 +382,7 @@ func TestBackup2B(t *testing.T) {
 	cfg.disconnect((leader1 + 2) % servers)
 	cfg.disconnect((leader1 + 3) % servers)
 	cfg.disconnect((leader1 + 4) % servers)
-
+	fmt.Printf("Testbackup2B:leader1 is %d followers %d %d %d disconnect leader1 %d and follower %d in a partition\n",leader1,(leader1 + 2) % servers,(leader1 + 3) % servers,(leader1 + 4) % servers,leader1,(leader1 + 1) % servers)
 	// submit lots of commands that won't commit
 	for i := 0; i < 50; i++ {
 		cfg.rafts[leader1].Start(rand.Int())
@@ -397,12 +397,13 @@ func TestBackup2B(t *testing.T) {
 	cfg.connect((leader1 + 2) % servers)
 	cfg.connect((leader1 + 3) % servers)
 	cfg.connect((leader1 + 4) % servers)
+	fmt.Printf("leader1 %d and follower %d disconnected,followers %d %d %d recover\n",leader1,(leader1 + 1) % servers,(leader1 + 2) % servers,(leader1 + 3) % servers,(leader1 + 4) % servers)
 
 	// lots of successful commands to new group.
 	for i := 0; i < 50; i++ {
 		cfg.one(rand.Int(), 3, true)
 	}
-
+	fmt.Printf("leader1 finish\n")
 	// now another partitioned leader and one follower
 	leader2 := cfg.checkOneLeader()
 	other := (leader1 + 2) % servers
@@ -410,7 +411,7 @@ func TestBackup2B(t *testing.T) {
 		other = (leader2 + 1) % servers
 	}
 	cfg.disconnect(other)
-
+	fmt.Printf("leader1 %d and followers %d %d disconnected and other is %d\n",leader1,(leader1 + 1) % servers,other,other)
 	// lots more commands that won't commit
 	for i := 0; i < 50; i++ {
 		cfg.rafts[leader2].Start(rand.Int())
@@ -425,7 +426,7 @@ func TestBackup2B(t *testing.T) {
 	cfg.connect((leader1 + 0) % servers)
 	cfg.connect((leader1 + 1) % servers)
 	cfg.connect(other)
-
+	fmt.Printf("leader1 %d and followers %d %d connected\n",leader1,(leader1 + 1) % servers,other)
 	// lots of successful commands to new group.
 	for i := 0; i < 50; i++ {
 		cfg.one(rand.Int(), 3, true)
@@ -435,6 +436,7 @@ func TestBackup2B(t *testing.T) {
 	for i := 0; i < servers; i++ {
 		cfg.connect(i)
 	}
+	fmt.Printf("all connect\n")
 	cfg.one(rand.Int(), servers, true)
 
 	cfg.end()
@@ -799,6 +801,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 
 		if leader != -1 && (rand.Int()%1000) < int(RaftElectionTimeout/time.Millisecond)/2 {
 			cfg.disconnect(leader)
+			fmt.Printf("leader %d disconnect\n",leader)
 			nup -= 1
 		}
 
@@ -806,6 +809,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 			s := rand.Int() % servers
 			if cfg.connected[s] == false {
 				cfg.connect(s)
+				fmt.Printf("%d connect\n",s)
 				nup += 1
 			}
 		}
@@ -816,8 +820,9 @@ func TestFigure8Unreliable2C(t *testing.T) {
 			cfg.connect(i)
 		}
 	}
-
-	cfg.one(rand.Int()%10000, servers, true)
+	one := rand.Int()%10000
+	fmt.Printf("the last test:one is %d\n",one)
+	cfg.one(one, servers, true)
 
 	cfg.end()
 }
